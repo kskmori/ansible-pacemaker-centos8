@@ -1,0 +1,82 @@
+### 4.1 Installing cluster software
+
+# 1. install packages
+#
+## yum install pcs pacemaker fence-agents-all
+#
+- name: install Pacemaker packages
+  yum:
+#    name: ['pcs', 'pacemaker', 'fence-agents-all']
+    name: ['pcs', 'pacemaker']
+    state: latest
+
+# 2. allow communitation ports if firewalld is in use
+#
+## firewall-cmd --permanent --add-service=high-availability
+## firewall-cmd --add-service=high-availability
+#
+- name: check if firewalld is enabled
+  command: firewall-cmd --state
+  changed_when: false
+  failed_when: false
+  register: firewalld_state
+
+- name: allow Pacemaker/Corosync communication through firewalld (permanent)
+  command: firewall-cmd --permanent --add-service=high-availability
+  register: result
+  changed_when: '"ALREADY_ENABLED" not in result.stderr'
+  when: firewalld_state.rc == 0
+
+- name: allow Pacemaker/Corosync communication through firewalld (runtime)
+  command: firewall-cmd --add-service=high-availability
+  register: result
+  changed_when: '"ALREADY_ENABLED" not in result.stderr'
+  when: firewalld_state.rc == 0
+
+# 3. hacluster user
+#
+## passwd hacluster
+#
+- name: set hacluster user password
+  user:
+    name: hacluster
+    password: "{{ HACLUSTER_PASSWORD|password_hash('sha512') }}"
+
+# 4. enable pcsd service
+#
+## systemctl start pcsd.service
+## systemctl enable pcsd.service
+#
+- name: enable pcsd service
+  service:
+    name: pcsd.service
+    state: started
+    enabled: yes
+
+# 5. cluster authentication
+#
+## pcs host auth NODE1 addr=... NODE2 addr=... -u hacluster -p PASSWORD
+#
+#  WARN: password will be appeared on the command line. Be secure!
+- name: cluster authentication
+  command: >
+    pcs host auth
+    {{ ansible_play_hosts[0] }} addr={{ hostvars[ansible_play_hosts[0]]['link0_addr'] }}
+    {{ ansible_play_hosts[1] }} addr={{ hostvars[ansible_play_hosts[1]]['link0_addr'] }}
+    -u hacluster -p {{ HACLUSTER_PASSWORD }}
+
+### 4.2 Creating a high availaility cluster
+# skip this section - this playbook assumes a multiple links configuration
+
+### 4.3 Creating a high availability cluster with multiple links
+#
+## pcs cluster setup NODE1 addr=LINK0 addr=LINK1 NODE2 addr=LINK0 addr=LINK1
+#
+# Note: currently assumes 2 nodes / 2 links configuration
+#
+- name: cluster setup
+  command: >
+    pcs cluster setup {{ CLUSTER_NAME }}
+    {{ ansible_play_hosts[0] }} addr={{ hostvars[ansible_play_hosts[0]]['link0_addr'] }} addr={{ hostvars[ansible_play_hosts[0]]['link1_addr'] }}
+    {{ ansible_play_hosts[1] }} addr={{ hostvars[ansible_play_hosts[1]]['link0_addr'] }} addr={{ hostvars[ansible_play_hosts[1]]['link1_addr'] }}
+

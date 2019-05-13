@@ -1,0 +1,46 @@
+## Preparation:
+##   - 1. download both the RHEL8 base ISO image and the HA addon ISO image
+##   - 2. set the RHEL8 base ISO image as a DVD media on the target hosts
+##   - 3. copy and rename the HA addon ISO image into 
+##        ./roles/repo-setup/files/rhel-8.0-ha-x86_64-dvd.iso
+
+- name: mount RHEL base media
+  mount:
+    name: /media
+    src: /dev/cdrom
+    fstype: iso9660
+    opts: ro
+    state: mounted
+
+- name: check if the media is mounted correctly
+  stat:
+    path: /media/BaseOS
+  register: stat_result
+- name: fail if the base repo is not ready
+  fail: msg="Failed to find the RHEL base repo. Check a DVD media."
+  when: stat_result.stat.exists == False
+
+
+- name: copy HA addon ISO media
+  copy:
+    src: rhel-8.0-ha-x86_64-dvd.iso
+    dest: /tmp/
+- name: setup the repository for HA addon
+  file:
+    path: /mnt/HighAvailability
+    state: directory
+- name: mount HA addon ISO media
+  mount:
+    name: /mnt/HighAvailability
+    src: /tmp/rhel-8.0-ha-x86_64-dvd.iso
+    fstype: iso9660
+    opts: loop,ro
+    state: mounted
+
+- name: setup yum repository for the ISO media
+  copy:
+    src: "{{ item }}"
+    dest: /etc/yum.repos.d/
+  with_items:
+    - rhel-media.repo
+    - rhel-ha.repo
