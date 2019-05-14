@@ -1,6 +1,6 @@
 [hacluster]
-rhel80-1 link0_addr=192.168.201.81 link1_addr=192.168.202.81
-rhel80-2 link0_addr=192.168.201.82 link1_addr=192.168.202.82
+rhel80-1 link0_addr=192.168.201.81 link1_addr=192.168.202.81 manage_addr=192.168.122.81
+rhel80-2 link0_addr=192.168.201.82 link1_addr=192.168.202.82 manage_addr=192.168.122.82
 
 [hacluster:vars]
 ansible_python_interpreter=/usr/libexec/platform-python

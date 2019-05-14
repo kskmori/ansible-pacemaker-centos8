@@ -6,8 +6,8 @@
 #
 - name: install Pacemaker packages
   yum:
-#    name: ['pcs', 'pacemaker', 'fence-agents-all']
-    name: ['pcs', 'pacemaker']
+    name: ['pcs', 'pacemaker', 'fence-agents-all']
+#    name: ['pcs', 'pacemaker']
     state: latest
 
 # 2. allow communitation ports if firewalld is in use
@@ -61,9 +61,10 @@
 - name: cluster authentication
   command: >
     pcs host auth
-    {{ ansible_play_hosts[0] }} addr={{ hostvars[ansible_play_hosts[0]]['link0_addr'] }}
-    {{ ansible_play_hosts[1] }} addr={{ hostvars[ansible_play_hosts[1]]['link0_addr'] }}
+    {{ ansible_play_hosts[0] }} addr={{ hostvars[ansible_play_hosts[0]]['manage_addr'] }}
+    {{ ansible_play_hosts[1] }} addr={{ hostvars[ansible_play_hosts[1]]['manage_addr'] }}
     -u hacluster -p {{ HACLUSTER_PASSWORD }}
+  when: inventory_hostname == ansible_play_hosts[0]
 
 ### 4.2 Creating a high availaility cluster
 # skip this section - this playbook assumes a multiple links configuration
@@ -79,4 +80,5 @@
     pcs cluster setup {{ CLUSTER_NAME }}
     {{ ansible_play_hosts[0] }} addr={{ hostvars[ansible_play_hosts[0]]['link0_addr'] }} addr={{ hostvars[ansible_play_hosts[0]]['link1_addr'] }}
     {{ ansible_play_hosts[1] }} addr={{ hostvars[ansible_play_hosts[1]]['link0_addr'] }} addr={{ hostvars[ansible_play_hosts[1]]['link1_addr'] }}
+  when: inventory_hostname == ansible_play_hosts[0]
 
