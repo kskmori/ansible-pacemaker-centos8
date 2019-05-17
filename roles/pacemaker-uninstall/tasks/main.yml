@@ -1,0 +1,51 @@
+### destroy cluster
+- name: check if pcs was already uninstalled
+  command: pcs --version
+  changed_when: false
+  failed_when: false
+  register: pcs_state
+
+- block:
+  - name: destroy cluster
+    command: pcs cluster destroy --all
+
+  - name: flush cluster authentication
+    command: pcs host deauth {{ ansible_play_hosts[0] }} {{ ansible_play_hosts[1] }}
+
+  when: inventory_hostname == ansible_play_hosts[0] and pcs_state.rc == 0
+
+### remove firewalld configuration
+- name: check if firewalld is enabled
+  command: firewall-cmd --state
+  changed_when: false
+  failed_when: false
+  register: firewalld_state
+
+- name: remove firewalld configuration for Pacemaker/Corosync (permanent)
+  command: firewall-cmd --permanent --remove-service=high-availability
+  register: result
+  changed_when: '"NOT_ENABLED" not in result.stderr'
+  when: firewalld_state.rc == 0
+
+- name: remove firewalld configuration for Pacemaker/Corosync (runtime)
+  command: firewall-cmd --remove-service=high-availability
+  register: result
+  changed_when: '"NOT_ENABLED" not in result.stderr'
+  when: firewalld_state.rc == 0
+
+### uninstall packages
+- name: uninstall pacemaker packages
+  yum:
+#    name: ['pcs', 'pacemaker', 'pacemaker-cli', 'fence-*']
+    name: ['pcs', 'pacemaker', 'pacemaker-cli']
+    state: absent
+  tags: yum
+
+# yum module does not seem to support a wildcard for the package names
+- name: uninstall fence-agents packages
+  command: env LANG=C yum -y erase fence-*
+  args:
+    warn: false
+  register: result
+  changed_when: "'Nothing to do.' not in result.stdout"
+  tags: yum
