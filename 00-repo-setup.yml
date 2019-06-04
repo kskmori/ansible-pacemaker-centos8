@@ -1,7 +1,7 @@
-- hosts: hacluster
+- hosts: hacluster, qnetd
   become: true
   max_fail_percentage: 0
   gather_facts: no
 
   roles:
-    - { role: repo-setup }
+    - role: repo-setup
