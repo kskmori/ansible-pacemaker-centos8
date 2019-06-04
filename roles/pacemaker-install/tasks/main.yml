@@ -7,8 +7,7 @@
 - name: install Pacemaker packages
   yum:
     name: ['pcs', 'pacemaker', 'fence-agents-all']
-#    name: ['pcs', 'pacemaker']
-    state: latest
+    state: present
 
 # 2. allow communitation ports if firewalld is in use
 #
