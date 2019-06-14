@@ -1,0 +1,74 @@
+## # yum -y install targetcli
+- name: install targetcli package
+  yum:
+    name: targetcli
+    state: present
+
+## # systemctl enable target.service
+## # systemctl start target.service
+- name: enable and start target.service
+  service:
+    name: target.service
+    state: started
+    enabled: yes
+
+### enable firewall
+## # firewall-cmd --permanent --add-service=iscsi-target
+## # firewall-cmd --add-service=iscsi-target
+#
+- name: check if firewalld is enabled
+  command: firewall-cmd --state
+  changed_when: false
+  failed_when: false
+  register: firewalld_state
+
+- name: allow iSCSI communication through firewalld (permanent)
+  command: firewall-cmd --permanent --add-service=iscsi-target
+  register: result
+  changed_when: '"ALREADY_ENABLED" not in result.stderr'
+  when: firewalld_state.rc == 0
+
+- name: allow iSCSI communication through firewalld (runtime)
+  command: firewall-cmd --add-service=iscsi-target
+  register: result
+  changed_when: '"ALREADY_ENABLED" not in result.stderr'
+  when: firewalld_state.rc == 0
+
+
+## # mkdir /home/iscsi
+- name: prepare directory for the fileio backstores
+  file:
+    path: /home/iscsi
+    state: directory
+
+## # targetcli /backstores/fileio create lun0 /home/iscsi/lun0.img 100M
+- name: create the fileio backstore
+  command: >-
+    targetcli /backstores/fileio create lun0 /home/iscsi/lun0.img 100M
+  register: result
+  changed_when: result.rc == 0
+  failed_when: result.rc != 0 and "already exists" not in result.stderr
+
+## # targetcli /iscsi create TARGET_IQN
+- name: create the iscsi target
+  command: >-
+    targetcli /iscsi create {{ TARGET_IQN }}
+  register: result
+  changed_when: result.rc == 0
+  failed_when: result.rc != 0 and "already exists" not in result.stderr
+
+## # targetcli /iscsi/TARGET_IQN/tpg1/luns create /backstores/fileio/lun0
+- name: attach the fileio backstore
+  command: >-
+    targetcli /iscsi/{{ TARGET_IQN }}/tpg1/luns create /backstores/fileio/lun0
+  register: result
+  changed_when: result.rc == 0
+  failed_when: result.rc != 0 and "already exists" not in result.stderr
+
+## # targetcli saveconfig
+- name: save config
+  command: >-
+    targetcli saveconfig
+  register: result
+  changed_when: result.rc == 0
+  #failed_when: result.rc != 0 and "XXX" not in result.stderr

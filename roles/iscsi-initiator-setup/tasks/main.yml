@@ -1,0 +1,81 @@
+## # yum install iscsi-initiator-utils
+# this should be always installed by the standard installation
+- name: install iscsi-initiator-utils
+  yum:
+    name: iscsi-initiator-utils
+    state: present
+
+## # systemctl enable iscsid.service
+## # systemctl start iscsid.service
+- name: enable and start iscsid.service
+  service:
+    name: iscsid.service
+    state: started
+    enabled: yes
+
+## # cut -d '=' -f 2 /etc/iscsi/initiatorname.iscsi
+- name: obtain initiator name
+  command: >-
+    cut -d '=' -f 2 /etc/iscsi/initiatorname.iscsi
+  register: initiatorname
+  changed_when: false
+  failed_when: initiatorname.stdout == ''
+
+## # (target host) targetcli /iscsi/TARGET_IQN/tpg1/acls create INITIATORNAME
+- name: add ACL for the initiator
+  delegate_to: "{{ groups['iscsi-target'][0] }}"
+  command: >-
+    targetcli /iscsi/{{ TARGET_IQN }}/tpg1/acls create {{ initiatorname.stdout }}
+  register: result
+  changed_when: result.rc == 0
+  failed_when: result.rc != 0 and "already exists" not in result.stderr
+
+## # iscsiadm -m discovery -t st -p TARGET_PORT
+- name: discovery the iscsi target
+  command: >-
+    iscsiadm -m discovery -t st -p {{ TARGET_PORT }}
+
+## # iscsiadm -m node -T TARGET_IQN -p TARGET_PORT -l
+- name: login to the iscsi target
+  command: >-
+    iscsiadm -m node -T {{ TARGET_IQN }} -p {{ TARGET_PORT }} -l
+
+### create symlinks as the persistent device name
+## # (target host) targetcli /backstores/fileio/lun0 info | awk '/^wwn: / {print $2}'
+- name: obtain the wwn of the target lun
+  delegate_to: "{{ groups['iscsi-target'][0] }}"
+  shell: |
+    targetcli /backstores/fileio/lun0 info | awk '/^wwn: / {print $2}'
+  register: wwn
+  changed_when: false
+  failed_when: wwn.stdout == ''
+
+- name: use wwn to identify the lun
+  set_fact:
+    SCSI_SERIAL: "{{ wwn.stdout }}"
+    DEVNAME_BASE: "{{ DEVNAME | regex_replace('^/dev/', '') }}"
+
+## # vi /etc/udev/rules.d/99-iscsi-hacluster.rules
+- name: create udev rules
+  template:
+    src: 99-iscsi-hacluster.rules.j2
+    dest: /etc/udev/rules.d/99-iscsi-hacluster.rules
+  register: rules
+
+## # udevadm control --reload-rules && udevadm trigger
+- name: reload udev rules
+  shell: |
+    udevadm control --reload-rules && udevadm trigger
+  when: rules.changed
+
+- name: check if partisions are already created on the shareddisk
+  stat:
+    path: "{{ DEVNAME }}p2"
+  register: result
+  when: inventory_hostname == ansible_play_hosts[0]
+
+## # parted DEVNAME --script 'mklabel msdos mkpart primary 1M 5M mkpart primary 5M -1s print quit'
+- name: create partitions on the shareddisk
+  command: >-
+    parted {{ DEVNAME }} --script 'mklabel msdos mkpart primary 1M 5M mkpart primary 5M -1s print quit'
+  when: inventory_hostname == ansible_play_hosts[0] and not result.stat.exists

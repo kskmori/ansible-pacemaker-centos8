@@ -1,0 +1,18 @@
+- hosts: iscsi-target
+  become: true
+  max_fail_percentage: 0
+  gather_facts: no
+
+  roles:
+    - role: iscsi-target-setup
+  tags: target, untagged
+
+- hosts: hacluster
+  become: true
+  max_fail_percentage: 0
+  gather_facts: no
+
+  roles:
+    - role: iscsi-initiator-setup
+  tags: initiator, untagged
+

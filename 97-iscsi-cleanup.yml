@@ -1,0 +1,17 @@
+- hosts: hacluster
+  become: true
+  max_fail_percentage: 0
+  gather_facts: no
+
+  roles:
+    - role: iscsi-initiator-cleanup
+  tags: initiator, untagged
+
+- hosts: iscsi-target
+  become: true
+  max_fail_percentage: 0
+  gather_facts: no
+
+  roles:
+    - role: iscsi-target-cleanup
+  tags: target, uninstall, untagged
