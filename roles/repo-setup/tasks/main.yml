@@ -4,6 +4,7 @@
 ##   - 3. copy and rename the HA addon ISO image into 
 ##        ./roles/repo-setup/files/rhel-8.0-ha-x86_64-dvd.iso
 
+## # mount /dev/cdrom
 - name: mount RHEL base media
   mount:
     name: /media
@@ -21,6 +22,8 @@
   when: stat_result.stat.exists == False
 
 
+## # mkdir /mnt/HighAvailability
+## # mount -o loop /tmp/rhel-8.0-ha-x86_64-dvd.iso /mnt/HighAvailability
 - name: copy HA addon ISO media
   copy:
     src: rhel-8.0-ha-x86_64-dvd.iso
@@ -37,6 +40,7 @@
     opts: loop,ro
     state: mounted
 
+## # vi /etc/yum.repos.d/{rhel-media.repo,rhel-ha.repo}
 - name: setup yum repository for the ISO media
   copy:
     src: "{{ item }}"

@@ -6,7 +6,7 @@
 
 # 20.5.4.3 Destroying a quorum device
 #
-## pcs qdevice destroy net
+## # pcs qdevice destroy net
 #
 - name: destroy qdevice
   command: >
@@ -14,6 +14,8 @@
   when: pcs_state.rc == 0
 
 ### remove firewalld configuration
+## # firewall-cmd --permanent --remove-service=high-availability
+## # firewall-cmd --remove-service=high-availability
 - name: check if firewalld is enabled
   command: firewall-cmd --state
   changed_when: false
@@ -32,7 +34,7 @@
   changed_when: '"NOT_ENABLED" not in result.stderr'
   when: firewalld_state.rc == 0
 
-#
+## # yum erase pcs corosync-qnetd
 - name: uninstall qnetd package
   yum:
     name: ['pcs', 'corosync-qnetd']
@@ -41,12 +43,14 @@
 
 ### Other cleanup stuff; not mentioned in the RHEL official documents
 # remove pcsd directory
+## # rm -rf /var/lib/pcsd
 - name: cleanup /var/lib/pcsd
   file:
     path: /var/lib/pcsd/
     state: absent
 
 # remove dependency packages
+## # yum erase corosync
 - name: uninstall corosync and pacemaker
   yum:
     name: corosync
@@ -54,6 +58,8 @@
     state: absent
 
 # remove hacluster users
+## # userdel hacluster
+## # groupdel haclient
 - name: remove hacluster user
   user:
     name: hacluster
@@ -64,6 +70,8 @@
     state: absent
 
 # remove coroqnetd users
+## # userdel coroqnetd
+## # groupdel coroqnetd
 - name: remove coroqnetd user
   user:
     name: coroqnetd

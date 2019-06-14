@@ -2,7 +2,7 @@
 
 # 1. install packages
 #
-## yum install pcs pacemaker fence-agents-all
+## # yum install pcs pacemaker fence-agents-all
 #
 - name: install Pacemaker packages
   yum:
@@ -11,8 +11,8 @@
 
 # 2. allow communitation ports if firewalld is in use
 #
-## firewall-cmd --permanent --add-service=high-availability
-## firewall-cmd --add-service=high-availability
+## # firewall-cmd --permanent --add-service=high-availability
+## # firewall-cmd --add-service=high-availability
 #
 - name: check if firewalld is enabled
   command: firewall-cmd --state
@@ -34,7 +34,7 @@
 
 # 3. hacluster user
 #
-## passwd hacluster
+## # passwd hacluster
 #
 - name: set hacluster user password
   user:
@@ -43,8 +43,8 @@
 
 # 4. enable pcsd service
 #
-## systemctl start pcsd.service
-## systemctl enable pcsd.service
+## # systemctl start pcsd.service
+## # systemctl enable pcsd.service
 #
 - name: enable pcsd service
   service:
@@ -54,7 +54,7 @@
 
 # 5. cluster authentication
 #
-## pcs host auth NODE1 addr=... NODE2 addr=... -u hacluster -p PASSWORD
+## # pcs host auth NODE1 addr=... NODE2 addr=... -u hacluster -p PASSWORD
 #
 #  WARN: password will be appeared on the command line. Be secure!
 - name: cluster authentication
@@ -70,7 +70,7 @@
 
 ### 4.3 Creating a high availability cluster with multiple links
 #
-## pcs cluster setup NODE1 addr=LINK0 addr=LINK1 NODE2 addr=LINK0 addr=LINK1
+## # pcs cluster setup NODE1 addr=LINK0 addr=LINK1 NODE2 addr=LINK0 addr=LINK1
 #
 # Note: currently assumes 2 nodes / 2 links configuration
 #

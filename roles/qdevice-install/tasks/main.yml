@@ -2,7 +2,7 @@
 
 # 20.5.1 Installing quorum device packages
 #
-## yum install corosync-qdevice
+## # yum install corosync-qdevice
 #
 - name: install qdevice package
   yum:
@@ -16,7 +16,7 @@
 
 # 3. authenticate user hacluster
 #
-## pcs host auth QDEVICE -u hacluster -p PASSWORD
+## # pcs host auth QDEVICE -u hacluster -p PASSWORD
 #
 #  NOTE: addr= option does not work for qdevice on RHEL8.0 (at least)
 #        needs to specify a same reachable address _both_ for
@@ -32,7 +32,7 @@
 
 # 4. Add the quorum device to the cluster
 #
-## pcs quorum device add model net host=QDEVICE algorithm=ffsplit
+## # pcs quorum device add model net host=QDEVICE algorithm=ffsplit
 #
 - name: add the quorum device
   command: >

@@ -1,6 +1,6 @@
 # 20.5.4.2 Removing a quorum device
 #
-## pcs quorum device remove
+## # pcs quorum device remove
 #
 - name: remove a quorum device
   command: >
@@ -13,7 +13,7 @@
 #
 #- name: deauth qdevice host
 
-#
+## # yum erase corosync-qdevice
 - name: uninstall qdevice package
   yum:
     name: corosync-qdevice

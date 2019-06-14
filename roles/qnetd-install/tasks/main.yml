@@ -2,15 +2,15 @@
 
 # 20.5.1 Installing quorum device packages
 #
-## yum install pcs corosync-qnetd
+## # yum install pcs corosync-qnetd
 #
 - name: install qnetd packages
   yum:
     name: ['pcs', 'corosync-qnetd']
     state: present
 #
-## systemctl start pcsd.service
-## systemctl enable pcsd.service
+## # systemctl start pcsd.service
+## # systemctl enable pcsd.service
 #
 - name: enable pcsd service
   service:
@@ -22,7 +22,7 @@
 # This step is apparently missing in the RHEL official documents
 # otherwise 'pcs host auth' on the cluster node would fail later.
 #
-## passwd hacluster
+## # passwd hacluster
 #
 - name: set hacluster user password
   user:
@@ -33,7 +33,7 @@
 
 # 1. configure the quorum device
 #
-## pcs qdevice setup model net --enable --start
+## # pcs qdevice setup model net --enable --start
 #
 - name: enable and start qdevice
   command: >
@@ -44,8 +44,8 @@
 
 # 2. enable the ports on the firewall
 #
-## firewall-cmd --permanent --add-service=high-availability
-## firewall-cmd --add-service=high-availability
+## # firewall-cmd --permanent --add-service=high-availability
+## # firewall-cmd --add-service=high-availability
 #
 - name: check if firewalld is enabled
   command: firewall-cmd --state

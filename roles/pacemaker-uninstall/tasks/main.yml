@@ -1,4 +1,6 @@
 ### destroy cluster
+## # pcs cluster destroy --all
+## # pcs host deauth NODE1 NODE2
 - name: check if pcs was already uninstalled
   command: pcs --version
   changed_when: false
@@ -15,6 +17,8 @@
   when: inventory_hostname == ansible_play_hosts[0] and pcs_state.rc == 0
 
 ### remove firewalld configuration
+## # firewall-cmd --permanent --remove-service=high-availability
+## # firewall-cmd --removed-service=high-availability
 - name: check if firewalld is enabled
   command: firewall-cmd --state
   changed_when: false
@@ -35,7 +39,7 @@
 
 ### uninstall packages
 #
-## yum erase pcs pacemaker fence-agents-all
+## # yum erase pcs pacemaker fence-agents-all
 #
 # autoremove seems enabled by default when running it from the shell
 #
@@ -60,6 +64,7 @@
 
 
 ### Other cleanup stuff
+## # rm -rf /var/lib/{pcsd,pacemaker,corosync} /var/log/{pacemaker,cluster} /etc/corosync
 # remove directories
 - name: cleanup directories
   file:
@@ -74,6 +79,8 @@
     - /etc/corosync
 
 # remove hacluster users
+## # userdel hacluster
+## # groupdel haclient
 - name: remove hacluster user
   user:
     name: hacluster
