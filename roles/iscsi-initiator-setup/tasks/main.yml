@@ -53,7 +53,7 @@
 - name: use wwn to identify the lun
   set_fact:
     SCSI_SERIAL: "{{ wwn.stdout }}"
-    DEVNAME_BASE: "{{ DEVNAME | regex_replace('^/dev/', '') }}"
+    DEVNAME_BASE: "{{ SHAREDDISK_DEV | regex_replace('^/dev/', '') }}"
 
 ## # vi /etc/udev/rules.d/99-iscsi-hacluster.rules
 - name: create udev rules
@@ -68,14 +68,17 @@
     udevadm control --reload-rules && udevadm trigger
   when: rules.changed
 
-- name: check if partisions are already created on the shareddisk
-  stat:
-    path: "{{ DEVNAME }}p2"
-  register: result
-  when: inventory_hostname == ansible_play_hosts[0]
-
-## # parted DEVNAME --script 'mklabel msdos mkpart primary 1M 5M mkpart primary 5M -1s print quit'
+## # parted SHAREDDISK_DEV --script 'mklabel msdos mkpart primary 0% 64MiB mkpart primary 64MiB 100% print quit'
 - name: create partitions on the shareddisk
-  command: >-
-    parted {{ DEVNAME }} --script 'mklabel msdos mkpart primary 1M 5M mkpart primary 5M -1s print quit'
-  when: inventory_hostname == ansible_play_hosts[0] and not result.stat.exists
+  parted:
+    device: "{{ SHAREDDISK_DEV }}"
+    state: present
+    number: "{{ item.number }}"
+    part_start: "{{ item.part_start }}"
+    part_end: "{{ item.part_end }}"
+  register: parted
+  with_items:
+    - { number: 1, part_start: 0%,    part_end: 64MiB }
+    - { number: 2, part_start: 64MiB,  part_end: 100% }
+  when: inventory_hostname == ansible_play_hosts[0]
+  tags: partitions
