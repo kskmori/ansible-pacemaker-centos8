@@ -1,0 +1,43 @@
+all:
+  vars:
+    HACLUSTER_PASSWORD: pacemaker
+    CLUSTER_NAME: cluster_name
+    # for RHEL8
+    ansible_python_interpreter: /usr/libexec/platform-python
+
+
+hacluster:
+  hosts:
+    rhel80-1:
+      link0_addr:  192.168.201.81
+      link1_addr:  192.168.202.81
+      manage_addr: 192.168.122.81
+    rhel80-2:
+      link0_addr:  192.168.201.82
+      link1_addr:  192.168.202.82
+      manage_addr: 192.168.122.82
+
+
+qnetd:
+  hosts:
+    rhel80-3:
+      qnetd_addr: 192.168.122.83
+
+# for iSCSI shared storage configuration
+iscsi-target:
+  hosts:
+    tm200-2:
+
+iscsi-initiator:
+  children:
+    hacluster:
+
+iscsi:
+  children:
+    iscsi-target:
+    iscsi-initiator:
+  vars:
+    TARGET_PORT: 192.168.122.1:3260
+    TARGET_IQN: iqn.2019-06.local.tm200-2:storage1
+    SHAREDDISK_DEV: /dev/shareddiska
+    SHAREDDISK_SIZE: 1G
