@@ -7,7 +7,7 @@
     - role: iscsi-target-setup
   tags: target, untagged
 
-- hosts: hacluster
+- hosts: iscsi-initiator
   become: true
   max_fail_percentage: 0
   gather_facts: no

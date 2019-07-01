@@ -1,0 +1,28 @@
+## # parted SHAREDDISK_DEV --script 'mklabel msdos mkpart primary 0% 64MiB mkpart primary 64MiB 100% print quit'
+- name: create partitions on the shareddisk
+  parted:
+    device: "{{ SHAREDDISK_DEV }}"
+    state: present
+    number: "{{ item.number }}"
+    part_start: "{{ item.part_start }}"
+    part_end: "{{ item.part_end }}"
+  register: parted
+  with_items: "{{ SHAREDDISK_PARTITIONS }}"
+  when: inventory_hostname == ansible_play_hosts[0]
+
+
+## # pcs stonith sbd device setup device=SBD_DEVICE   (RHEL8)
+## # pcs stonith sbd device setup --device=SBD_DEVICE (RHEL7)
+- name: initialize SBD partition
+  command: >-
+    pcs stonith sbd device setup device={{ SBD_DEVICE }}
+  when: inventory_hostname == ansible_play_hosts[0]
+
+## # mkfs -t xfs -d su=512k,sw=3 -f {{ SHAREDDISK_DEV }}{1-4}
+- name: make filesystem for the database partitions
+  filesystem:
+    dev: "{{ item.device }}"
+    fstype: xfs
+    opts: -d su=512k,sw=3
+  with_items: "{{ PG_FILESYSTEMS }}"
+  when: inventory_hostname == ansible_play_hosts[0]

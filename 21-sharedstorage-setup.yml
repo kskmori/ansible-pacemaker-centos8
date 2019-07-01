@@ -1,0 +1,8 @@
+- hosts: hacluster-shared
+  become: true
+  max_fail_percentage: 0
+  gather_facts: no
+
+  roles:
+    - role: sharedstorage-setup
+

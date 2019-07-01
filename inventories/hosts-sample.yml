@@ -41,3 +41,16 @@ iscsi:
     TARGET_IQN: iqn.2019-06.local.tm200-2:storage1
     SHAREDDISK_DEV: /dev/shareddiska
     SHAREDDISK_SIZE: 1G
+
+# PostgreSQL shared storage configuration variables
+hacluster-shared:
+  children:
+    hacluster:
+  vars:
+    SHAREDDISK_DEV: /dev/shareddiska
+    SHAREDDISK_PARTITIONS:
+      - { number: 1, part_start: 0%,    part_end: 64MiB }
+      - { number: 2, part_start: 64MiB,  part_end: 100% }
+    SBD_DEVICE: /dev/shareddiska1
+    PG_FILESYSTEMS:
+      - { resourceid: pFS-pgdata, mountpoint: /dbfp/pgdata, device: /dev/shareddiska2 }

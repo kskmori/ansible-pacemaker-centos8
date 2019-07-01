@@ -67,18 +67,3 @@
   shell: |
     udevadm control --reload-rules && udevadm trigger
   when: rules.changed
-
-## # parted SHAREDDISK_DEV --script 'mklabel msdos mkpart primary 0% 64MiB mkpart primary 64MiB 100% print quit'
-- name: create partitions on the shareddisk
-  parted:
-    device: "{{ SHAREDDISK_DEV }}"
-    state: present
-    number: "{{ item.number }}"
-    part_start: "{{ item.part_start }}"
-    part_end: "{{ item.part_end }}"
-  register: parted
-  with_items:
-    - { number: 1, part_start: 0%,    part_end: 64MiB }
-    - { number: 2, part_start: 64MiB,  part_end: 100% }
-  when: inventory_hostname == ansible_play_hosts[0]
-  tags: partitions
