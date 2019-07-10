@@ -37,20 +37,32 @@ iscsi:
     iscsi-target:
     iscsi-initiator:
   vars:
-    TARGET_PORT: 192.168.122.1:3260
+    TARGET_PORTS: # multipath
+      - 192.168.122.1:3260
+      - 192.168.202.1:3260
     TARGET_IQN: iqn.2019-06.local.tm200-2:storage1
-    SHAREDDISK_DEV: /dev/shareddiska
-    SHAREDDISK_SIZE: 1G
+    TARGET_LUN_SIZE: 1G
 
 # PostgreSQL shared storage configuration variables
 hacluster-shared:
   children:
     hacluster:
   vars:
-    SHAREDDISK_DEV: /dev/shareddiska
+    SHAREDDISK_DEV: /dev/mapper/mpatha
     SHAREDDISK_PARTITIONS:
       - { number: 1, part_start: 0%,    part_end: 64MiB }
       - { number: 2, part_start: 64MiB,  part_end: 100% }
-    SBD_DEVICE: /dev/shareddiska1
+
+    SBD_DEVICE: /dev/mapper/mpatha1
     PG_FILESYSTEMS:
-      - { resourceid: pFS-pgdata, mountpoint: /dbfp/pgdata, device: /dev/shareddiska2 }
+      - { resourceid: pgsql-filesystem, mountpoint: /shared, device: /dev/mapper/mpatha2 }
+    # (Optional) subdirectories to be created under the mountpoints if necessary
+    PG_SUBDIRECTORIES:
+      - /shared/pgdata/data
+
+    PGDATA: /shared/pgdata/data
+    PGPORT: 5432
+    PG_INITDB_OPTS: --encoding=UTF-8 --no-locale
+    # (Optional) create customized files and define these variables if necessary
+    #PG_HBA_CONF_FILE: {{ role_path }}/files/pg_hba.conf
+    #POSTGRESQL_CONF_FILE: {{ role_path }}/files/postgresql.conf

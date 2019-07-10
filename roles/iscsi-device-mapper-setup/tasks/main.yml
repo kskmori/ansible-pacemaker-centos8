@@ -1,0 +1,22 @@
+# Based on the Red Hat Documents and the Knowledge base
+# https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/dm_multipath/mpio_setup
+# https://access.redhat.com/solutions/66281
+
+## # yum install device-mapper-multipath
+- name: install device-mapper packages
+  yum:
+    name: device-mapper-multipath
+    state: present
+
+## # mpathconf --enable --user_friendly_names y --find_multipaths y
+- name: create multipath.conf
+  command: >-
+    mpathconf --enable --user_friendly_names y --find_multipaths y
+
+## # systemctl start multipathd.service
+## # systemctl enable multipathd.service
+- name: enable and start multipathd.service
+  service:
+    name: multipathd.service
+    state: started
+    enabled: yes

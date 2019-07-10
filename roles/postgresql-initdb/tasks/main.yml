@@ -1,0 +1,74 @@
+### Initialize the PostgreSQL database and configuration files
+
+### Prepare DB mountpoint directories
+- name: create mountpoint directories
+  file:
+    path: "{{ item.mountpoint }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode:  0700
+  with_items: "{{ PG_FILESYSTEMS }}"
+
+### Initialize DB and configurations on the Primary node
+- block:
+
+  # not using mount module so not to modify /etc/fstab neither remove the mountpoint
+  # ref. https://github.com/ansible/ansible/issues/48134
+  - name: mount the DB mountpoints for the initialization
+    command: >-
+      env LANG=C mount {{ item.device }} {{ item.mountpoint }}
+    register: result
+    changed_when: result.rc == 0
+    failed_when: result.rc != 0 and "already mounted" not in result.stderr
+    with_items: "{{ PG_FILESYSTEMS }}"
+
+  # prepare DB subdirectories
+  - name: prepare subdirectories under the mountpoints
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: postgres
+      group: postgres
+      mode:  0700
+    with_items: "{{ PG_SUBDIRECTORIES }}"
+
+  # Initialize DB
+  - stat: path={{ PGDATA }}/PG_VERSION
+    register: db_initialized
+  - name: initialize the database
+    become: yes
+    become_user: postgres
+    shell: . /var/lib/pgsql/.bash_profile && initdb -D {{ PGDATA }} {{ PG_INITDB_OPTS }}
+    when: not db_initialized.stat.exists
+
+  # copy customized config files
+  - name: copy pg_hba.conf (optional)
+    copy:
+      src: "{{ PG_HBA_CONF_FILE }}"
+      dest: "{{ PGDATA }}/pg_hba.conf"
+      owner: postgres
+      group: postgres
+      mode:  0600
+    when: PG_HBA_CONF_FILE is defined
+
+  - name: copy postgresql.conf (optional)
+    copy:
+      src: "{{ POSTGRESQL_CONF_FILE }}"
+      dest: "{{ PGDATA }}/postgresql.conf"
+      owner: postgres
+      group: postgres
+      mode:  0600
+    when: POSTGRESQL_CONF_FILE is defined
+
+  # not using mount module so not to modify /etc/fstab neither remove the mountpoint
+  - name: unmount the DB mountpoints
+    command: >-
+      env LANG=C umount {{ item.mountpoint }}
+    register: result
+    changed_when: result.rc == 0
+    failed_when: result.rc != 0 and "not mounted" not in result.stderr
+    with_items: "{{ PG_FILESYSTEMS }}"
+      
+### end of block for Initialize DB and configurations on the Primary node
+  when: inventory_hostname == ansible_play_hosts[0]

@@ -11,11 +11,11 @@
   when: inventory_hostname == ansible_play_hosts[0]
 
 
-## # pcs stonith sbd device setup device=SBD_DEVICE   (RHEL8)
-## # pcs stonith sbd device setup --device=SBD_DEVICE (RHEL7)
+## # pcs stonith sbd device setup device=SBD_DEVICE   --force # (RHEL8)
+## # pcs stonith sbd device setup --device=SBD_DEVICE --force # (RHEL7)
 - name: initialize SBD partition
   command: >-
-    pcs stonith sbd device setup device={{ SBD_DEVICE }}
+    pcs stonith sbd device setup device={{ SBD_DEVICE }} --force
   when: inventory_hostname == ansible_play_hosts[0]
 
 ## # mkfs -t xfs -d su=512k,sw=3 -f {{ SHAREDDISK_DEV }}{1-4}

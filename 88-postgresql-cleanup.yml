@@ -1,0 +1,23 @@
+- hosts: hacluster-shared
+  become: true
+  max_fail_percentage: 0
+  gather_facts: no
+
+  vars_prompt:
+    - name: "erasedb_ok"
+      prompt: |-
+        Erase PostgreSQL Database
+        WARNING: all database and the configuration will be erased.
+        continue ?
+      private: no
+      default: "y"
+      tags: erasedb
+
+  roles:
+    - role: postgresql-erasedb
+      when: erasedb_ok == "y"
+      tags: erasedb
+
+    - role: postgresql-uninstall
+      tags: uninstall
+

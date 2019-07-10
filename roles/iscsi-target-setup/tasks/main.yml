@@ -41,10 +41,10 @@
     path: /home/iscsi
     state: directory
 
-## # targetcli /backstores/fileio create lun0 /home/iscsi/lun0.img SHAREDDISK_SIZE
+## # targetcli /backstores/fileio create lun0 /home/iscsi/lun0.img TARGET_LUN_SIZE
 - name: create the fileio backstore
   command: >-
-    targetcli /backstores/fileio create lun0 /home/iscsi/lun0.img {{ SHAREDDISK_SIZE }}
+    targetcli /backstores/fileio create lun0 /home/iscsi/lun0.img {{ TARGET_LUN_SIZE }}
   register: result
   changed_when: result.rc == 0
   failed_when: result.rc != 0 and "already exists" not in result.stderr

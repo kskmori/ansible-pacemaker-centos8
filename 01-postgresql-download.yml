@@ -1,0 +1,22 @@
+- hosts: localhost
+  connection: local
+  become: false
+  gather_facts: no
+
+  tasks:
+    - name: make sure the minor revision of PostgreSQL
+      set_fact:
+        pg_rev: '11.4-1PGDG'
+      when: pg_rev is not defined
+
+    - name: Download PostgreSQL 11 packages
+      get_url:
+        url="https://yum.postgresql.org/11/redhat/rhel-8-x86_64/{{ item }}"
+        dest=./roles/postgresql-install/files/
+        timeout=60
+      with_items:
+        - postgresql11-libs-{{ pg_rev }}.rhel8.x86_64.rpm
+        - postgresql11-{{ pg_rev }}.rhel8.x86_64.rpm
+        - postgresql11-server-{{ pg_rev }}.rhel8.x86_64.rpm
+        - postgresql11-docs-{{ pg_rev }}.rhel8.x86_64.rpm
+        - postgresql11-contrib-{{ pg_rev }}.rhel8.x86_64.rpm

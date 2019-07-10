@@ -1,0 +1,40 @@
+# check if the device-mapper-multipath packages was already uninstalled
+- name: gather the package facts
+  package_facts:
+    manager: auto
+
+## # multipath -F
+## # multipath -W
+- name: flush multipath device maps
+  command: >-
+    multipath -F
+  when: ansible_facts.packages['device-mapper-multipath'] is defined
+
+- name: reset wwids file
+  command: >-
+    multipath -W
+  when: ansible_facts.packages['device-mapper-multipath'] is defined
+
+## # systemctl stop multipathd.service
+## # systemctl disable multipathd.service
+- name: disable and stop multipathd.service
+  service:
+    name: multipathd.service
+    state: stopped
+    enabled: no
+  when: ansible_facts.packages['device-mapper-multipath'] is defined
+
+## # yum erase device-mapper-multipath
+- name: uninstall device-mapper-multipath
+  yum:
+    name: device-mapper-multipath
+    state: absent
+
+## # rm -rf /etc/multipath.conf /etc/multipath/
+- name: remove multipath configuration files
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/multipath.conf
+    - /etc/multipath/

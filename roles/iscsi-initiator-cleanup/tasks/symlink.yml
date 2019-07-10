@@ -1,0 +1,7 @@
+# this playbook is not used any more
+
+## # rm -f /etc/udev/rules.d/99-iscsi-hacluster.rules
+- name: erase udev rules
+  file:
+    path: /etc/udev/rules.d/99-iscsi-hacluster.rules
+    state: absent

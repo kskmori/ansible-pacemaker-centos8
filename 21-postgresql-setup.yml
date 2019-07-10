@@ -5,4 +5,10 @@
 
   roles:
     - role: sharedstorage-setup
+      tags: storage-setup
 
+    - role: postgresql-install
+      tags: install
+
+    - role: postgresql-initdb
+      tags: initdb

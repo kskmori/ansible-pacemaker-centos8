@@ -1,18 +1,20 @@
-## # iscsiadm -m node -T TARGET_IQN -p TARGET_PORT --logout
+## # iscsiadm -m node -T TARGET_IQN -p TARGET_PORTS[0,1] --logout
 - name: logout from the iscsi target
   command: >-
-    iscsiadm -m node -T {{ TARGET_IQN }} -p {{ TARGET_PORT }} --logout
+    iscsiadm -m node -T {{ TARGET_IQN }} -p {{ item }} --logout
   register: result
   changed_when: result.rc == 0
   failed_when: result.rc != 0 and "No matching sessions found" not in result.stderr
+  with_items: "{{ TARGET_PORTS }}"
 
-## # iscsiadm -m node -T TARGET_IQN -p TARGET_PORT -o delete
+## # iscsiadm -m node -T TARGET_IQN -p TARGET_PORTS[0,1] -o delete
 - name: cleanup the target records
   command: >-
-    iscsiadm -m node -T {{ TARGET_IQN }} -p {{ TARGET_PORT }} -o delete
+    iscsiadm -m node -T {{ TARGET_IQN }} -p {{ item }} -o delete
   register: result
   changed_when: result.rc == 0
   failed_when: result.rc != 0 and "No records found" not in result.stderr
+  with_items: "{{ TARGET_PORTS }}"
 
 ## # cut -d '=' -f 2 /etc/iscsi/initiatorname.iscsi
 - name: obtain initiator name
@@ -30,9 +32,3 @@
   register: result
   changed_when: result.rc == 0
   failed_when: result.rc != 0 and "No such NodeACL" not in result.stderr and "No such path" not in result.stderr
-
-## # rm -f /etc/udev/rules.d/99-iscsi-hacluster.rules
-- name: erase udev rules
-  file:
-    path: /etc/udev/rules.d/99-iscsi-hacluster.rules
-    state: absent

@@ -30,40 +30,14 @@
   changed_when: result.rc == 0
   failed_when: result.rc != 0 and "already exists" not in result.stderr
 
-## # iscsiadm -m discovery -t st -p TARGET_PORT
+## # iscsiadm -m discovery -t st -p TARGET_PORTS[0,1]
 - name: discovery the iscsi target
   command: >-
-    iscsiadm -m discovery -t st -p {{ TARGET_PORT }}
+    iscsiadm -m discovery -t st -p {{ item }}
+  with_items: "{{ TARGET_PORTS }}"
 
-## # iscsiadm -m node -T TARGET_IQN -p TARGET_PORT -l
+## # iscsiadm -m node -T TARGET_IQN -p TARGET_PORTS[0,1] -l
 - name: login to the iscsi target
   command: >-
-    iscsiadm -m node -T {{ TARGET_IQN }} -p {{ TARGET_PORT }} -l
-
-### create symlinks as the persistent device name
-## # (target host) targetcli /backstores/fileio/lun0 info | awk '/^wwn: / {print $2}'
-- name: obtain the wwn of the target lun
-  delegate_to: "{{ groups['iscsi-target'][0] }}"
-  shell: |
-    targetcli /backstores/fileio/lun0 info | awk '/^wwn: / {print $2}'
-  register: wwn
-  changed_when: false
-  failed_when: wwn.stdout == ''
-
-- name: use wwn to identify the lun
-  set_fact:
-    SCSI_SERIAL: "{{ wwn.stdout }}"
-    DEVNAME_BASE: "{{ SHAREDDISK_DEV | regex_replace('^/dev/', '') }}"
-
-## # vi /etc/udev/rules.d/99-iscsi-hacluster.rules
-- name: create udev rules
-  template:
-    src: 99-iscsi-hacluster.rules.j2
-    dest: /etc/udev/rules.d/99-iscsi-hacluster.rules
-  register: rules
-
-## # udevadm control --reload-rules && udevadm trigger
-- name: reload udev rules
-  shell: |
-    udevadm control --reload-rules && udevadm trigger
-  when: rules.changed
+    iscsiadm -m node -T {{ TARGET_IQN }} -p {{ item }} -l
+  with_items: "{{ TARGET_PORTS }}"

@@ -1,0 +1,60 @@
+### Install PostgreSQL packages
+
+# make sure an old version of PostgreSQL is absent
+#   ignore warnings about using yum instead of rpm;
+#   yum can not be used here because it would also erase postgresql11-libs if presented
+#   so it would be always "changed"
+- name: uninstall old version of PostgreSQL
+  shell: rpm -e postgresql-libs
+  args:
+    warn: false
+  register: rpm_rc
+  changed_when: rpm_rc.rc == 0
+  failed_when: false
+
+- name: make sure the minor revision of PostgreSQL
+  set_fact:
+    pg_rev: '11.4-1PGDG'
+  when: pg_rev is not defined
+
+- name: copy PostgreSQL packages to the node
+  copy:
+    src="{{ item }}"
+    dest="/tmp/"
+  with_items:
+      # the order is significant - as each rpms will be installed in this order
+      - postgresql11-libs-{{ pg_rev }}.rhel8.x86_64.rpm
+      - postgresql11-{{ pg_rev }}.rhel8.x86_64.rpm
+      - postgresql11-server-{{ pg_rev }}.rhel8.x86_64.rpm
+      - postgresql11-docs-{{ pg_rev }}.rhel8.x86_64.rpm
+      - postgresql11-contrib-{{ pg_rev }}.rhel8.x86_64.rpm
+  register: rc_copy
+
+- name: install PostgreSQL packages
+  yum:
+    name: "{{ item.dest | default(item.path) }}"
+    update_cache: yes
+    state: present
+  with_items: "{{ rc_copy.results }}"
+  loop_control:
+    label: "{{ item.dest | default(item.path) }}" # to suppress too verbose logs
+
+### Setup postgres user's environment
+- name: add PATH to postgres user environment
+  become: yes
+  become_user: postgres
+  lineinfile:
+    dest="/var/lib/pgsql/.bash_profile"
+    regexp="^export PATH=/usr/pgsql-11/bin:\$PATH"
+    line="export PATH=/usr/pgsql-11/bin:$PATH"
+    state=present
+
+- name: add PGDATA to postgres user environment
+  become: yes
+  become_user: postgres
+  lineinfile:
+    dest="/var/lib/pgsql/.bash_profile"
+    regexp="^export PGDATA="
+    line="export PGDATA={{ PGDATA }}"
+    state=present
+

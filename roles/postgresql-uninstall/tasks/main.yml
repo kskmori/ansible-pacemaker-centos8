@@ -1,0 +1,10 @@
+# yum module on rhel8 does not handle a wildcard name like:
+#    name: postgresql11-*
+- name: uninstall PostgreSQL packages
+  yum:
+    name:
+      - postgresql11
+      - postgresql11-libs
+      - postgresql11-docs
+    autoremove: yes
+    state: absent

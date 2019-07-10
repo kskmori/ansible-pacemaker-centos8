@@ -1,0 +1,48 @@
+### Erase DB and configurations on the Primary node
+
+- block:
+
+  # mount temporary to erase everything in the shared storage
+  # ignores when the mountpoint was already removed
+  - name: mount the DB mountpoints for the initialization
+    command: >-
+      env LANG=C mount {{ item.device }} {{ item.mountpoint }}
+    register: result
+    changed_when: result.rc == 0
+    failed_when: >-
+      result.rc != 0
+      and "already mounted" not in result.stderr
+      and "mount point does not exist" not in result.stderr
+    with_items: "{{ PG_FILESYSTEMS }}"
+
+  # erase whole contents in the shared storage
+  - name: erase PGDATA directory
+    file:
+      path: "{{ PGDATA }}"
+      state: absent
+  - name: erase subdirectories
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items: "{{ PG_SUBDIRECTORIES }}"
+
+  - name: unmount the DB mountpoints
+    command: >-
+      env LANG=C umount {{ item.mountpoint }}
+    register: result
+    changed_when: result.rc == 0
+    failed_when: >-
+      result.rc != 0
+      and "not mounted" not in result.stderr
+      and "no mount point specified" not in result.stderr
+    with_items: "{{ PG_FILESYSTEMS }}"
+
+### end of block for Erase DB and configurations on the Primary node
+  when: inventory_hostname == ansible_play_hosts[0]
+
+# remove DB mountpoint directories
+- name: create mountpoint directories
+  file:
+    path: "{{ item.mountpoint }}"
+    state: absent
+  with_items: "{{ PG_FILESYSTEMS }}"

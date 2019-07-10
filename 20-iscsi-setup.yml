@@ -14,5 +14,7 @@
 
   roles:
     - role: iscsi-initiator-setup
-  tags: initiator, untagged
+      tags: initiator, untagged
 
+    - role: iscsi-device-mapper-setup
+      tags: device-mapper, untagged

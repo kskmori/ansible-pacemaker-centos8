@@ -4,8 +4,10 @@
   gather_facts: no
 
   roles:
+    - role: iscsi-device-mapper-cleanup
+      tags: device-mapper, untagged
     - role: iscsi-initiator-cleanup
-  tags: initiator, untagged
+      tags: initiator, untagged
 
 - hosts: iscsi-target
   become: true
