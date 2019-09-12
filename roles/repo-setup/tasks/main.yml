@@ -23,11 +23,11 @@
 
 
 ## # mkdir /mnt/HighAvailability
-## # mount -o loop /tmp/rhel-8.0-ha-x86_64-dvd.iso /mnt/HighAvailability
+## # mount -o loop /var/tmp/rhel-8.0-ha-x86_64-dvd.iso /mnt/HighAvailability
 - name: copy HA addon ISO media
   copy:
     src: rhel-8.0-ha-x86_64-dvd.iso
-    dest: /tmp/
+    dest: /var/tmp/
 - name: setup the repository for HA addon
   file:
     path: /mnt/HighAvailability
@@ -35,7 +35,7 @@
 - name: mount HA addon ISO media
   mount:
     name: /mnt/HighAvailability
-    src: /tmp/rhel-8.0-ha-x86_64-dvd.iso
+    src: /var/tmp/rhel-8.0-ha-x86_64-dvd.iso
     fstype: iso9660
     opts: loop,ro
     state: mounted
