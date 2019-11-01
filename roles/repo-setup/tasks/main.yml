@@ -4,14 +4,15 @@
 ##   - 3. copy and rename the HA addon ISO image into 
 ##        ./roles/repo-setup/files/rhel-8.0-ha-x86_64-dvd.iso
 
-## # mount /dev/cdrom
+## # mount -o ro /dev/cdrom /media
 - name: mount RHEL base media
-  mount:
-    name: /media
-    src: /dev/cdrom
-    fstype: iso9660
-    opts: ro
-    state: mounted
+  # aviod using mount module so not to modify /etc/fstab
+  # ref. https://github.com/ansible/ansible/issues/48134
+  command: >-
+    env LANG=C mount -o ro /dev/cdrom /media
+  register: result
+  changed_when: result.rc == 0
+  failed_when: result.rc != 0 and "already mounted" not in result.stderr
 
 - name: check if the media is mounted correctly
   stat:
@@ -23,7 +24,7 @@
 
 
 ## # mkdir /mnt/HighAvailability
-## # mount -o loop /var/tmp/rhel-8.0-ha-x86_64-dvd.iso /mnt/HighAvailability
+## # mount -o loop,ro /var/tmp/rhel-8.0-ha-x86_64-dvd.iso /mnt/HighAvailability
 - name: copy HA addon ISO media
   copy:
     src: rhel-8.0-ha-x86_64-dvd.iso
@@ -33,12 +34,11 @@
     path: /mnt/HighAvailability
     state: directory
 - name: mount HA addon ISO media
-  mount:
-    name: /mnt/HighAvailability
-    src: /var/tmp/rhel-8.0-ha-x86_64-dvd.iso
-    fstype: iso9660
-    opts: loop,ro
-    state: mounted
+  command: >-
+    env LANG=C mount -o loop,ro /var/tmp/rhel-8.0-ha-x86_64-dvd.iso /mnt/HighAvailability
+  register: result
+  changed_when: result.rc == 0
+  failed_when: result.rc != 0 and "already mounted" not in result.stderr
 
 ## # vi /etc/yum.repos.d/{rhel-media.repo,rhel-ha.repo}
 - name: setup yum repository for the ISO media
