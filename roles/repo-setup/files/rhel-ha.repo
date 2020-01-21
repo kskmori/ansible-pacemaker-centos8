@@ -1,4 +1,4 @@
-[rhel-ha]
+[HighAvailability]
 name=Red Hat Enterprise Linux $releasever - $basearch - HighAvailability
 baseurl=file:///mnt/HighAvailability
 enabled=1
