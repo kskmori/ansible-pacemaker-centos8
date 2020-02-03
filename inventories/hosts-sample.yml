@@ -2,26 +2,26 @@ all:
   vars:
     HACLUSTER_PASSWORD: pacemaker
     CLUSTER_NAME: cluster_name
-    # for RHEL8
+    # for CentOS8
     ansible_python_interpreter: /usr/libexec/platform-python
 
 
 hacluster:
   hosts:
-    rhel80-1:
-      link0_addr:  192.168.201.81
-      link1_addr:  192.168.202.81
-      manage_addr: 192.168.122.81
-    rhel80-2:
-      link0_addr:  192.168.201.82
-      link1_addr:  192.168.202.82
-      manage_addr: 192.168.122.82
+    centos81-1:
+      link0_addr:  192.168.201.71
+      link1_addr:  192.168.202.71
+      manage_addr: 192.168.122.71
+    centos81-2:
+      link0_addr:  192.168.201.72
+      link1_addr:  192.168.202.72
+      manage_addr: 192.168.122.72
 
 
 qnetd:
   hosts:
-    rhel80-3:
-      qnetd_addr: 192.168.122.83
+    centos81-3:
+      qnetd_addr: 192.168.122.73
 
 # for iSCSI shared storage configuration
 iscsi-target:

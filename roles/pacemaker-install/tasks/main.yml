@@ -7,6 +7,7 @@
 - name: install Pacemaker packages
   yum:
     name: ['pcs', 'pacemaker', 'fence-agents-all']
+    enablerepo: HighAvailability
     state: present
 
 # 2. allow communitation ports if firewalld is in use
@@ -51,6 +52,19 @@
     name: pcsd.service
     state: started
     enabled: yes
+
+
+### Additional steps for proxy environment
+# this step is not described in the official documents but
+# is necessary on the proxy environment
+- name: add no_proxy for pcs communication
+  lineinfile:
+    path: /etc/environment
+    line: export no_proxy={{ groups['hacluster'][0] }},{{ groups['hacluster'][1] }},{{ hostvars[groups['hacluster'][0]]['manage_addr'] }},{{ hostvars[groups['hacluster'][1]]['manage_addr'] }},{{ ansible_env.no_proxy | default('') }}
+    regexp: ^export no_proxy={{ groups['hacluster'][0] }},{{ groups['hacluster'][1] }},{{ hostvars[groups['hacluster'][0]]['manage_addr'] }},{{ hostvars[groups['hacluster'][1]]['manage_addr'] }},
+    state: present
+  when: ansible_env.https_proxy is defined or ansible_env.HTTPS_PROXY is defined
+
 
 # 5. cluster authentication
 #
