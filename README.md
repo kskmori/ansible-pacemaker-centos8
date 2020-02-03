@@ -27,4 +27,17 @@ NOTE: this repository is just for my development and might be removed in the fut
 
 
 
+## Trouble shootings
+* 1. iscsid error logs
+```
+Jan 27 00:01:45 centos81-1 kernel: connection4:0: detected conn error (1020)
+Jan 27 00:01:45 centos81-1 iscsid[15455]: iscsid: Kernel reported iSCSI connection 3:0 error (1020 - ISCSI_ERR_TCP_CONN_CLOSE: TCP connection closed) state (3)
+```
+** see: https://www.thegeekdiary.com/how-to-modify-the-iscsi-initiator-id-in-linux/
+```
+# cd /etc/iscsi
+# mv initiatorname.iscsi  initiatorname.iscsi.bak
+# echo "InitiatorName=`/sbin/iscsi-iname`" > initiatorname.iscsi
+# systemctl restart iscsid.service
+```
 

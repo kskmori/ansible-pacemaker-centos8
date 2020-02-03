@@ -10,6 +10,11 @@
   with_items: "{{ SHAREDDISK_PARTITIONS }}"
   when: inventory_hostname == ansible_play_hosts[0]
 
+## # partprobe SHAREDDISK_DEV
+- name: update partitions information on both nodes
+  command: >-
+    partprobe {{ SHAREDDISK_DEV }}
+  when: parted.changed
 
 ## # pcs stonith sbd device setup device=SBD_DEVICE   --force # (RHEL8)
 ## # pcs stonith sbd device setup --device=SBD_DEVICE --force # (RHEL7)
