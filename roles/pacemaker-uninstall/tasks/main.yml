@@ -12,9 +12,10 @@
     command: pcs cluster destroy --all
 
   - name: flush cluster authentication
-    command: pcs host deauth {{ ansible_play_hosts[0] }} {{ ansible_play_hosts[1] }}
+    command: pcs host deauth {{ groups['hacluster'] | join(' ') }}
 
   when: inventory_hostname == ansible_play_hosts[0] and pcs_state.rc == 0
+  tags: destroy
 
 ### remove firewalld configuration
 ## # firewall-cmd --permanent --remove-service=high-availability
@@ -54,13 +55,13 @@
 # if autoremove did not work, here is an alternative way
 # yum module does not support a wildcard for the package names so use command:
 #
-#- name: uninstall fence-agents packages
-#  command: env LANG=C yum -y erase pcs pacemaker* corosync* fence-*
-#  args:
-#    warn: false
-#  register: result
-#  changed_when: "'Nothing to do.' not in result.stdout"
-#  tags: yum
+- name: uninstall pacemaker packages without autoremove (--tags=uninstall_force)
+  command: env LANG=C yum -y erase pcs pacemaker* corosync* libknet* fence-*
+  args:
+    warn: false
+  register: result
+  changed_when: "'Nothing to do.' not in result.stdout"
+  tags: uninstall_force,never
 
 
 ### Other cleanup stuff
@@ -88,4 +89,18 @@
 - name: remove haclient group
   group:
     name: haclient
+    state: absent
+
+# cleanup no_proxy
+## # vi /etc/environment # remove no_proxy=NODE1,NODE2,...
+- name: compose no_proxy list
+  set_fact:
+    NO_PROXY_LIST: >-
+      {%- for node in groups['hacluster']|sort -%}
+        {{ node }},{{ hostvars[node]['manage_addr']}},
+      {%- endfor -%}
+- name: remove no_proxy for pcs communication
+  lineinfile:
+    path: /etc/environment
+    regexp: ^export no_proxy={{ NO_PROXY_LIST }}
     state: absent

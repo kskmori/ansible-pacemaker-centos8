@@ -57,11 +57,18 @@
 ### Additional steps for proxy environment
 # this step is not described in the official documents but
 # is necessary on the proxy environment
+## # vi /etc/environment # add no_proxy=NODE1,NODE2,...
+- name: compose no_proxy list
+  set_fact:
+    NO_PROXY_LIST: >-
+      {%- for node in groups['hacluster']|sort -%}
+        {{ node }},{{ hostvars[node]['manage_addr']}},
+      {%- endfor -%}
 - name: add no_proxy for pcs communication
   lineinfile:
     path: /etc/environment
-    line: export no_proxy={{ groups['hacluster'][0] }},{{ groups['hacluster'][1] }},{{ hostvars[groups['hacluster'][0]]['manage_addr'] }},{{ hostvars[groups['hacluster'][1]]['manage_addr'] }},{{ ansible_env.no_proxy | default('') }}
-    regexp: ^export no_proxy={{ groups['hacluster'][0] }},{{ groups['hacluster'][1] }},{{ hostvars[groups['hacluster'][0]]['manage_addr'] }},{{ hostvars[groups['hacluster'][1]]['manage_addr'] }},
+    line: export no_proxy={{ NO_PROXY_LIST }}{{ ansible_env.no_proxy | default('') }}
+    regexp: ^export no_proxy={{ NO_PROXY_LIST }}
     state: present
   when: ansible_env.https_proxy is defined or ansible_env.HTTPS_PROXY is defined
 
@@ -74,8 +81,9 @@
 - name: cluster authentication
   command: >
     pcs host auth
-    {{ ansible_play_hosts[0] }} addr={{ hostvars[ansible_play_hosts[0]]['manage_addr'] }}
-    {{ ansible_play_hosts[1] }} addr={{ hostvars[ansible_play_hosts[1]]['manage_addr'] }}
+    {% for node in groups['hacluster']|sort %}
+      {{ node }} addr={{ hostvars[node]['manage_addr'] }}
+    {% endfor %}
     -u hacluster -p {{ HACLUSTER_PASSWORD }}
   when: inventory_hostname == ansible_play_hosts[0]
 
@@ -91,7 +99,8 @@
 - name: cluster setup
   command: >
     pcs cluster setup {{ CLUSTER_NAME }}
-    {{ ansible_play_hosts[0] }} addr={{ hostvars[ansible_play_hosts[0]]['link0_addr'] }} addr={{ hostvars[ansible_play_hosts[0]]['link1_addr'] }}
-    {{ ansible_play_hosts[1] }} addr={{ hostvars[ansible_play_hosts[1]]['link0_addr'] }} addr={{ hostvars[ansible_play_hosts[1]]['link1_addr'] }}
+    {% for node in groups['hacluster']|sort %}
+      {{ node }} addr={{ hostvars[node]['link0_addr'] }} addr={{ hostvars[node]['link1_addr'] }}
+    {% endfor %}
   when: inventory_hostname == ansible_play_hosts[0]
 
